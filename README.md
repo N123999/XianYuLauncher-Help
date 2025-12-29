@@ -8,7 +8,3 @@ A UI-perfect Minecraft Java Edition launcher (XianYuLauncher) - Unofficial, no a
 
 ![XianYu Launcher Launch Page](image/LaunchPage.png)
 *A preview of the current launcher's main interface.*
-
-## Status
-
-The launcher is currently in active development and not yet feature-complete. Core functionalities are being polished, and more features will be added in future updates.

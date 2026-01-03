@@ -1,0 +1,105 @@
+<Page
+    x:Class="XianYuLauncher.Views.ErrorAnalysisPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:XianYuLauncher.Views"
+    xmlns:viewModels="using:XianYuLauncher.ViewModels"
+    xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    
+    
+
+    <Grid Background="Transparent">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="60" />
+            <RowDefinition Height="50" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        
+        <!-- 顶部导航栏 -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Background="{ThemeResource NavigationViewExpandedPaneBackground}" Padding="16" Spacing="8" VerticalAlignment="Stretch">
+            <Button Content="&lt; 返回" Click="BackButton_Click" Style="{StaticResource TextBlockButtonStyle}" VerticalAlignment="Center" />
+            <TextBlock x:Uid="ErrorAnalysis_Title" Text="实时游戏日志" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" Margin="16,0,0,0" />
+        </StackPanel>
+        
+        <!-- 功能按钮区 -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="16,10,16,10" Spacing="8" VerticalAlignment="Center">
+            <Button x:Uid="ErrorAnalysis_ExportLogButton" Content="导出日志" Command="{x:Bind ViewModel.ExportErrorLogsCommand}" Width="120" Height="36" />
+            <Button x:Uid="ErrorAnalysis_CopyLogButton" Content="复制日志" Command="{x:Bind ViewModel.CopyLogsCommand}" Width="120" Height="36" />
+            <Button x:Uid="ErrorAnalysis_ClearLogButton" Content="清空日志" Command="{x:Bind ViewModel.ClearLogsCommand}" Width="120" Height="36" />
+        </StackPanel>
+        
+        <!-- 日志显示区 -->
+        <Grid Grid.Row="2" Margin="16,0,16,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            
+            <TextBlock x:Uid="ErrorAnalysis_LogDetails" Text="实时日志详情" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8" />
+            
+            <ScrollViewer Grid.Row="1" 
+                           VerticalScrollBarVisibility="Auto" 
+                           HorizontalScrollBarVisibility="Disabled" 
+                           Background="{ThemeResource TextControlBackground}" 
+                           BorderBrush="{ThemeResource TextControlBorderBrush}" 
+                           BorderThickness="1" 
+                           CornerRadius="4" 
+                           Padding="8" 
+                           x:Name="LogScrollViewer">
+                <TextBox Text="{x:Bind ViewModel.FullLog, Mode=OneWay}" 
+                         FontFamily="Consolas" 
+                         FontSize="12" 
+                         TextWrapping="Wrap" 
+                         AcceptsReturn="True" 
+                         IsReadOnly="True" 
+                         Background="Transparent" 
+                         BorderBrush="Transparent" 
+                         BorderThickness="0" 
+                         TextChanged="LogTextBox_TextChanged" 
+                         x:Name="LogTextBox" 
+                         HorizontalAlignment="Stretch" />
+            </ScrollViewer>
+        </Grid>
+        
+        <!-- AI错误分析区域 -->
+        <Grid Grid.Row="3" Margin="16,16,16,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            
+            <TextBlock x:Uid="ErrorAnalysis_AnalysisTitle" Text="AI错误分析" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,8" />
+            
+            <!-- AI分析内容，简化布局结构 -->
+            <Border Grid.Row="1" 
+                    Background="{ThemeResource SolidBackgroundFillColorBase}" 
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="12" 
+                    Padding="16">
+                <ScrollViewer 
+                          VerticalScrollBarVisibility="Auto" 
+                          HorizontalScrollBarVisibility="Disabled" 
+                          MaxHeight="300" 
+                          x:Name="AiScrollViewer" 
+                          Background="Transparent" 
+                          Padding="0">
+                    <controls:MarkdownTextBlock Text="{x:Bind ViewModel.AiAnalysisResult, Mode=OneWay}" 
+                           TextWrapping="Wrap" 
+                           FontSize="14" 
+                           Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" 
+                           Background="Transparent" 
+                           x:Name="AiTextBlock" 
+                           LinkClicked="OnMarkdownLinkClicked" 
+                           Width="Auto" 
+                           HorizontalAlignment="Stretch" 
+                           IsTextSelectionEnabled="True" />
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</Page>

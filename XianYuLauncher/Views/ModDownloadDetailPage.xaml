@@ -1,0 +1,459 @@
+<Page x:Class="XianYuLauncher.Views.ModDownloadDetailPage" x:Name="PageRoot"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:controls="using:XianYuLauncher.Controls"
+      xmlns:viewModels="using:XianYuLauncher.ViewModels"
+      xmlns:local="using:XianYuLauncher.Views"
+      xmlns:helpers="using:XianYuLauncher.Helpers"
+      mc:Ignorable="d"
+      NavigationCacheMode="Required">
+
+    <Page.Resources>
+        <!-- 按钮样式 -->
+        <Style x:Key="TextBlockButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimary}" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 布尔值到可见性转换器 -->
+        <helpers:BoolToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <!-- 字符串空值到可见性转换器 -->
+        <helpers:StringNullOrEmptyToBoolConverter x:Key="StringNullOrEmptyToVisibilityConverter" />
+
+        <!-- 布尔值取反转换器 -->
+        <helpers:BoolNegationConverter x:Key="BooleanNegationConverter" />
+
+        <!-- 布尔值到图标转换器 -->
+        <helpers:BoolToGlyphConverter x:Key="BoolToGlyphConverter" />
+
+        <!-- 布尔值到透明度转换器 -->
+        <helpers:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
+
+        <!-- 首字母大写转换器 -->
+        <helpers:FirstLetterToUpperConverter x:Key="FirstLetterToUpperConverter" />
+    </Page.Resources>
+
+    <Grid>
+        <!-- 下载弹窗 -->
+        <ContentDialog
+            x:Name="DownloadDialog"
+            x:Uid="ModDownloadDetailPage_DownloadDialog"
+            Title="{x:Bind ViewModel.DownloadDialogTitle}"
+            PrimaryButtonText="选择版本"
+            SecondaryButtonText="自定义位置"
+            CloseButtonText="取消"
+            DefaultButton="None"
+            IsPrimaryButtonEnabled="True"
+            IsSecondaryButtonEnabled="True"
+            PrimaryButtonClick="DownloadDialog_PrimaryButtonClick"
+            SecondaryButtonClick="DownloadDialog_SecondaryButtonClick"
+            CloseButtonClick="DownloadDialog_CloseButtonClick">
+            <StackPanel Spacing="16">
+                <TextBlock x:Uid="ModDownloadDetailPage_DownloadDialog_InstructionText" Text="请选择下载方式：" FontSize="14" />
+                
+                <!-- 前置Mod列表 -->
+                <StackPanel Visibility="{x:Bind ViewModel.DependencyProjects.Count > 0, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <!-- 加载状态 -->
+                    <ProgressRing IsActive="{x:Bind ViewModel.IsLoadingDependencies}" 
+                                  HorizontalAlignment="Center" 
+                                  VerticalAlignment="Center" 
+                                  Height="32" 
+                                  Width="32" 
+                                  Margin="0,8" 
+                                  Visibility="{x:Bind ViewModel.IsLoadingDependencies, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    
+                    <!-- 依赖项卡片列表 -->
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.DependencyProjects, Mode=OneWay}" 
+                                  Visibility="{x:Bind ViewModel.IsLoadingDependencies, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter='Inverse'}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Spacing="8" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button x:Name="DependencyCardButton" 
+                                        Background="{ThemeResource CardBackgroundFillColorDefault}" 
+                                        CornerRadius="8" 
+                                        Padding="12" 
+                                        BorderThickness="1" 
+                                        BorderBrush="{ThemeResource CardStrokeColorDefault}"
+                                        Width="380"
+                                        HorizontalAlignment="Left"
+                                        Command="{Binding ElementName=PageRoot, Path=ViewModel.NavigateToDependencyCommand}" 
+                                        CommandParameter="{Binding ProjectId}">
+                                    <Button.Content>
+                                        <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" Width="356">
+                                            <!-- 图标 -->
+                                            <Border CornerRadius="4" Width="40" Height="40" Background="Transparent">
+                                                <Image Source="{Binding IconUrl}" Width="40" Height="40" Stretch="UniformToFill" />
+                                            </Border>
+                                            
+                                            <!-- 文本内容 -->
+                                            <StackPanel Orientation="Vertical" Spacing="4" VerticalAlignment="Center" Width="300">
+                                                <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" 
+                                                           Width="300" HorizontalAlignment="Left" />
+                                                <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondary}" 
+                                                           TextTrimming="CharacterEllipsis" MaxLines="2" 
+                                                           Width="300" HorizontalAlignment="Left" 
+                                                           TextWrapping="WrapWholeWords" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Button.Content>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
+        </ContentDialog>
+
+        <!-- 版本选择弹窗 -->
+        <ContentDialog
+            x:Name="VersionSelectionDialog"
+            x:Uid="ModDownloadDetailPage_VersionSelectionDialog"
+            Title="选择游戏版本"
+            PrimaryButtonText="确认"
+            CloseButtonText="取消"
+            DefaultButton="Primary"
+            PrimaryButtonClick="VersionSelectionDialog_PrimaryButtonClick"
+            CloseButtonClick="VersionSelectionDialog_CloseButtonClick">
+            <StackPanel Spacing="12">
+                <TextBlock x:Uid="ModDownloadDetailPage_VersionSelectionDialog_InstructionText" Text="请选择要安装的游戏版本：" FontSize="14" />
+                <ListView
+                    ItemsSource="{x:Bind ViewModel.InstalledGameVersions, Mode=OneWay}"
+                    SelectedItem="{x:Bind ViewModel.SelectedInstalledVersion, Mode=TwoWay}"
+                    SelectionMode="Single"
+                    MaxHeight="300">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="8">
+                                <TextBlock
+                                    Text="{Binding DisplayName}"
+                                    Opacity="{Binding IsCompatible, Converter={StaticResource BoolToOpacityConverter}, ConverterParameter='1.0,0.5'}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondary}" Text="{x:Bind ViewModel.VersionSelectionTip, Mode=OneWay}" />
+            </StackPanel>
+        </ContentDialog>
+        
+        <!-- 存档选择弹窗 -->
+        <ContentDialog
+            x:Name="SaveSelectionDialog"
+            x:Uid="ModDownloadDetailPage_SaveSelectionDialog"
+            Title="选择存档"
+            PrimaryButtonText="确认"
+            CloseButtonText="取消"
+            DefaultButton="Primary"
+            PrimaryButtonClick="SaveSelectionDialog_PrimaryButtonClick"
+            CloseButtonClick="SaveSelectionDialog_CloseButtonClick">
+            <StackPanel Spacing="12">
+                <TextBlock x:Uid="ModDownloadDetailPage_SaveSelectionDialog_InstructionText" Text="请选择要安装数据包的存档：" FontSize="14" />
+                <ListView
+                    ItemsSource="{x:Bind ViewModel.SaveNames, Mode=OneWay}"
+                    SelectedItem="{x:Bind ViewModel.SelectedSaveName, Mode=TwoWay}"
+                    SelectionMode="Single"
+                    MaxHeight="300">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="8">
+                                <TextBlock Text="{Binding}" FontSize="16" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondary}" Text="{x:Bind ViewModel.SaveSelectionTip, Mode=OneWay}" />
+            </StackPanel>
+        </ContentDialog>
+
+        <!-- 整合包安装进度弹窗 -->
+        <ContentDialog
+            x:Name="ModpackInstallDialog"
+            x:Uid="ModDownloadDetailPage_ModpackInstallDialog"
+            Title="整合包安装中"
+            CloseButtonText="取消"
+            IsPrimaryButtonEnabled="False"
+            IsSecondaryButtonEnabled="False"
+            DefaultButton="None"
+            CloseButtonClick="ModpackInstallDialog_CloseButtonClick">
+            <StackPanel Spacing="16" Width="400">
+                <!-- 安装状态文本 -->
+                <TextBlock FontSize="16" Text="{x:Bind ViewModel.InstallStatus, Mode=OneWay}" TextWrapping="WrapWholeWords" />
+                
+                <!-- 进度条 -->
+                <ProgressBar Value="{x:Bind ViewModel.InstallProgress, Mode=OneWay}" Minimum="0" Maximum="100" Height="8" CornerRadius="4" />
+                
+                <!-- 进度百分比文本 -->
+                <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondary}" Text="{x:Bind ViewModel.InstallProgressText, Mode=OneWay}" HorizontalTextAlignment="Center" />
+            </StackPanel>
+        </ContentDialog>
+        
+        <!-- 下载进度弹窗（用于Mod、光影、资源包、数据包） -->
+        <ContentDialog
+            x:Name="DownloadProgressDialog"
+            x:Uid="ModDownloadDetailPage_DownloadProgressDialog"
+            Title="下载中"
+            CloseButtonText="取消"
+            IsPrimaryButtonEnabled="False"
+            IsSecondaryButtonEnabled="False"
+            DefaultButton="None"
+            CloseButtonClick="DownloadProgressDialog_CloseButtonClick">
+            <StackPanel Spacing="16" Width="400">
+                <!-- 下载状态文本 -->
+                <TextBlock FontSize="16" Text="{x:Bind ViewModel.DownloadStatus, Mode=OneWay}" TextWrapping="WrapWholeWords" />
+                
+                <!-- 进度条 -->
+                <ProgressBar Value="{x:Bind ViewModel.DownloadProgress, Mode=OneWay}" Minimum="0" Maximum="100" Height="8" CornerRadius="4" />
+                
+                <!-- 进度百分比文本（显示小数） -->
+                <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondary}" Text="{x:Bind ViewModel.DownloadProgressText, Mode=OneWay}" HorizontalTextAlignment="Center" />
+            </StackPanel>
+        </ContentDialog>
+        <!-- 顶部导航栏 -->
+        <Grid Padding="0,16,0,0">
+            <Button x:Uid="ModDownloadDetailPage_BackButton"
+                    Content="&lt; 返回" 
+                    HorizontalAlignment="Left" 
+                    VerticalAlignment="Top" 
+                    Margin="16,0,0,0" 
+                    Click="BackButton_Click" 
+                    Style="{StaticResource TextBlockButtonStyle}" />
+        </Grid>
+        
+        <ScrollViewer HorizontalScrollMode="Disabled" VerticalScrollMode="Enabled" Margin="0,48,0,0">
+            <StackPanel Spacing="16" Padding="16">
+                
+                <!-- 错误信息 -->
+                <TextBlock Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}" 
+                           Foreground="Red" 
+                           TextWrapping="WrapWholeWords" 
+                           Margin="0,8" 
+                           Visibility="{x:Bind ViewModel.ErrorMessage, Converter={StaticResource StringNullOrEmptyToVisibilityConverter}, Mode=OneWay}" />
+                <!-- Mod基本信息 -->
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                        <Border CornerRadius="8" Clip="{Binding ElementName=ImageBorder, Path=CornerRadius}">
+                            <Image x:Name="ImageBorder" Source="{x:Bind ViewModel.ModIconUrl, Mode=OneWay}" Width="80" Height="80" Stretch="UniformToFill" />
+                        </Border>
+                        <StackPanel>
+                            <TextBlock Text="{x:Bind ViewModel.ModName, Mode=OneWay}" FontSize="24" FontWeight="Bold" />
+                            <TextBlock Text="{x:Bind ViewModel.ModAuthor, Mode=OneWay}" FontSize="16" Foreground="{ThemeResource TextFillColorSecondary}" />
+                            <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
+                                <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondary}">
+                                    <Run x:Uid="ModDownloadDetailPage_LicenseText" Text="许可证: " />
+                                    <Run Text="{x:Bind ViewModel.ModLicense, Mode=OneWay}" />
+                                </TextBlock>
+                                <TextBlock Text="|" FontSize="14" Foreground="{ThemeResource TextFillColorTertiary}" />
+                                <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondary}">
+                                    <Run x:Uid="ModDownloadDetailPage_DownloadsText" Text="下载量: " />
+                                    <Run Text="{x:Bind ViewModel.ModDownloads, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Mod描述 -->
+        <StackPanel Spacing="8">
+            <TextBlock x:Uid="ModDownloadDetailPage_DescriptionTitle" Text="描述" FontSize="18" FontWeight="Bold" />
+                    <TextBlock Text="{x:Bind ViewModel.ModDescription, Mode=OneWay}" FontSize="14" TextWrapping="WrapWholeWords" />
+                </StackPanel>
+
+                <!-- 支持的加载器/标签 -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{x:Bind ViewModel.SupportedLoadersText, Mode=OneWay}" FontSize="18" FontWeight="Bold" />
+                    <!-- 使用ScrollViewer + StackPanel替代WrapGrid，确保所有标签完整显示 -->
+                    <ScrollViewer HorizontalScrollMode="Auto" VerticalScrollMode="Disabled" HorizontalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.SupportedLoaders, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{ThemeResource SolidBackgroundFillColorSecondary}" Padding="8,4" Margin="0,0,8,0" CornerRadius="4">
+                                        <TextBlock Text="{Binding}" FontSize="14" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </StackPanel>
+
+                <!-- 游戏版本和资源包/Mod版本下载列表 -->
+                <StackPanel Spacing="12">
+                    <TextBlock Text="{x:Bind ViewModel.DownloadSectionText, Mode=OneWay}" FontSize="18" FontWeight="Bold" />
+                    <!-- 加载状态指示器 -->
+                    <ProgressRing IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" 
+                                  Visibility="{x:Bind ViewModel.IsLoading, Converter={StaticResource BooleanToVisibilityConverter}, Mode=OneWay}"
+                                  HorizontalAlignment="Center" 
+                                  VerticalAlignment="Center" 
+                                  Height="32" 
+                                  Width="32" 
+                                  Margin="0,8" />
+                    
+                    <!-- 游戏版本列表 -->
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.SupportedGameVersions, Mode=OneWay}" HorizontalContentAlignment="Stretch">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="viewModels:GameVersionViewModel">
+                                <StackPanel Spacing="4">
+                                    <!-- 游戏版本标题栏 -->
+                                    <Border Background="{ThemeResource SolidBackgroundFillColorSecondary}" Padding="12" CornerRadius="4">
+                                        <Button Content="{x:Bind GameVersion}" 
+                                                Style="{StaticResource TextBlockButtonStyle}" 
+                                                HorizontalAlignment="Left"
+                                                Click="GameVersionButton_Click" 
+                                                Tag="{x:Bind}">
+                                            <Button.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding}" FontSize="16" FontWeight="Bold" />
+                                                            <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondary}">
+                                                                    <Run Text="(" />
+                                                                    <Run Text="{Binding ModVersions.Count}" />
+                                                                    <Run Text=")" />
+                                                                </TextBlock>
+                                                            <FontIcon Glyph="{Binding IsExpanded, Converter={StaticResource BoolToGlyphConverter}, ConverterParameter='chevron_down|chevron_right', Mode=OneWay}" 
+                                                                      FontSize="12" 
+                                                                      Foreground="{ThemeResource TextFillColorSecondary}" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </Button.ContentTemplate>
+                                        </Button>
+                                    </Border>
+
+                                    <!-- 展开后的加载器列表 -->
+                                    <ItemsControl ItemsSource="{x:Bind Loaders}" 
+                                                  Visibility="{x:Bind IsExpanded, Converter={StaticResource BoolToVisibilityConverter}, Mode=OneWay}"
+                                                  HorizontalContentAlignment="Stretch">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="viewModels:LoaderViewModel">
+                                                <StackPanel>
+                                                    <!-- 加载器分组标题 -->
+                                                    <Button Command="{x:Bind ToggleExpandCommand}" 
+                                                            Style="{StaticResource TextBlockButtonStyle}" 
+                                                            Margin="12,0,0,0">
+                                                        <Button.Content>
+                                                        <StackPanel Orientation="Horizontal" 
+                                                                    Spacing="8" 
+                                                                    VerticalAlignment="Center">
+                                                                <!-- 占位元素，保持原来的偏右效果 -->
+                                                                <TextBlock Width="1" /> <!-- 与原来FontIcon宽度一致 -->
+                                                            <TextBlock Text="{x:Bind LoaderName}" 
+                                                                       FontSize="16" 
+                                                                       FontWeight="SemiBold" />
+                                                            <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondary}">
+                                                                <Run Text="(" />
+                                                                <Run Text="{x:Bind ModVersions.Count, Mode=OneWay}" />
+                                                                <Run Text=")" />
+                                                            </TextBlock>
+                                                        </StackPanel>
+                                                    </Button.Content>
+                                                    </Button>
+                                                    
+                                                    <!-- 加载器下的Mod版本列表 -->
+                                                    <ItemsControl ItemsSource="{x:Bind ModVersions}" 
+                                                                  Visibility="{x:Bind IsExpanded, Converter={StaticResource BoolToVisibilityConverter}, Mode=OneWay}"
+                                                                  HorizontalContentAlignment="Stretch">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate x:DataType="viewModels:ModVersionViewModel">
+                                                                <Border Background="{ThemeResource SolidBackgroundFillColorSecondary}" 
+                                                                        Padding="12" 
+                                                                        CornerRadius="4" 
+                                                                        Margin="24,0,0,0">
+                                                                    <StackPanel Spacing="8">
+                                                                        <!-- Mod版本信息 -->
+                                                                        <StackPanel Orientation="Horizontal" 
+                                                                                    Spacing="16" 
+                                                                                    VerticalAlignment="Center">
+                                                                            <StackPanel>
+                                                                                <TextBlock Text="{x:Bind VersionNumber}" FontSize="16" FontWeight="Bold" />
+                                                                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                                                                        <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondary}">
+                                                                                            <Run x:Uid="ModDownloadDetailPage_ReleaseDateText" Text="发布日期: " />
+                                                                                            <Run Text="{x:Bind ReleaseDate}" />
+                                                                                        </TextBlock>
+                                                                                        <TextBlock FontSize="14" Foreground="{ThemeResource TextFillColorSecondary}">
+                                                                                            <Run x:Uid="ModDownloadDetailPage_VersionTypeText" Text="类型: " />
+                                                                                            <Run Text="{x:Bind VersionType, Converter={StaticResource FirstLetterToUpperConverter}}" />
+                                                                                        </TextBlock>
+                                                                                    </StackPanel>
+                                                                            </StackPanel>
+                                                                            <Button x:Uid="ModDownloadDetailPage_DownloadButton"
+                                                                                    Content="下载"
+                                                                                    Width="80" 
+                                                                                    Height="32" 
+                                                                                    Command="{Binding ElementName=PageRoot, Path=ViewModel.OpenDownloadDialogCommand}" 
+                                                                                    CommandParameter="{x:Bind}" />
+                                                                        </StackPanel>
+                                                                        
+                                                                        <!-- Mod文件名 -->
+                                                                        <TextBlock Text="{x:Bind FileName}" 
+                                                                                   FontSize="12" 
+                                                                                   Foreground="{ThemeResource TextFillColorTertiary}" 
+                                                                                   Margin="0,0,0,8" />
+                                                                    </StackPanel>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <StackPanel Spacing="8" />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Spacing="8" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Spacing="8" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- 下载状态 -->
+                <Border Background="{ThemeResource SolidBackgroundFillColorSecondary}" 
+                        Padding="12" 
+                        CornerRadius="4"
+                        Visibility="{x:Bind ViewModel.IsDownloading, Mode=OneWay, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Spacing="8">
+                        <TextBlock x:Uid="ModDownloadDetailPage_DownloadStatusTitle" Text="下载状态" FontSize="16" FontWeight="Bold" />
+                        <TextBlock Text="{x:Bind ViewModel.DownloadStatus}" FontSize="14" />
+                        <ProgressBar Value="{x:Bind ViewModel.DownloadProgress}" Minimum="0" Maximum="100" Height="8" CornerRadius="4" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>
